@@ -148,7 +148,7 @@ function effacer_meta($nom, $table='meta') {
 }
 
 /**
- * Met à jour où crée une meta avec la clé et valeur indiquée
+ * Met à jour ou crée une meta avec la clé et la valeur indiquée
  *
  * @see ecrire_config()
  * @see effacer_config()
