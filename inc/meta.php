@@ -25,7 +25,7 @@ if (!defined('_ECRIRE_INC_VERSION')) return;
 define('_META_CACHE_TIME', 1<<24);
 
 // http://code.spip.net/@inc_meta_dist
-function inc_meta_dist($table='meta')
+function inc_meta_dist($table = 'meta')
 {
 	// Lire les meta, en cache si present, valide et lisible
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
@@ -64,7 +64,7 @@ function inc_meta_dist($table='meta')
 // pour eviter l'erreur fatale (serveur non encore configure)
 
 // http://code.spip.net/@lire_metas
-function lire_metas($table='meta') {
+function lire_metas($table = 'meta') {
 
 	if ($result = spip_query("SELECT nom,valeur FROM spip_$table")) {
 		include_spip('base/abstract_sql');
@@ -107,7 +107,7 @@ function lire_metas($table='meta') {
  * @param string $table
  *      Table SQL d'enregistrement des meta.
 **/
-function touch_meta($antidate= false, $table='meta'){
+function touch_meta($antidate= false, $table = 'meta'){
 	$file = cache_meta($table);
 	if (!$antidate OR !@touch($file, $antidate)) {
 		$r = $GLOBALS[$table];
@@ -134,7 +134,7 @@ function touch_meta($antidate= false, $table='meta'){
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
 **/
-function effacer_meta($nom, $table='meta') {
+function effacer_meta($nom, $table = 'meta') {
 	// section critique sur le cache:
 	// l'invalider avant et apres la MAJ de la BD
 	// c'est un peu moins bien qu'un vrai verrou mais ca suffira
@@ -163,7 +163,7 @@ function effacer_meta($nom, $table='meta') {
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
 **/
-function ecrire_meta($nom, $valeur, $importable = NULL, $table='meta') {
+function ecrire_meta($nom, $valeur, $importable = NULL, $table = 'meta') {
 
 	static $touch = array();
 	if (!$nom) return;
@@ -208,7 +208,7 @@ function ecrire_meta($nom, $valeur, $importable = NULL, $table='meta') {
  * @return string
  *     Nom du fichier cache
 **/
-function cache_meta($table='meta') {
+function cache_meta($table = 'meta') {
 	return ($table=='meta') ? _FILE_META : (_DIR_CACHE . $table . '.php');
 }
 
@@ -235,7 +235,7 @@ function installer_table_meta($table) {
  * @param string $table
  * @param bool $force
  */
-function supprimer_table_meta($table, $force=false) {
+function supprimer_table_meta($table, $force = false) {
 	if ($table=='meta') return; // interdit !
 
 	if ($force OR !sql_countsel("spip_$table")) {
