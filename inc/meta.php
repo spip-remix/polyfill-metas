@@ -283,5 +283,3 @@ function supprimer_table_meta($table, $force = false) {
 		$trouver_table('');
 	}
 }
-
-?>
