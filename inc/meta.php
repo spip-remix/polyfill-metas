@@ -41,7 +41,7 @@ function inc_meta_dist($table = 'meta') {
 	}
 
 	if (isset($GLOBALS[$table]['touch'])
-		and ($GLOBALS[$table]['touch'] < time()-_META_CACHE_TIME)
+		and ($GLOBALS[$table]['touch'] < time() - _META_CACHE_TIME)
 	) {
 		$GLOBALS[$table] = array();
 	}
@@ -53,7 +53,7 @@ function inc_meta_dist($table = 'meta') {
 	// renouveller l'alea general si trop vieux ou sur demande explicite
 	if ((test_espace_prive() || isset($_GET['renouvelle_alea']))
 		and $GLOBALS[$table]
-		and (time() > _RENOUVELLE_ALEA+(isset($GLOBALS['meta']['alea_ephemere_date']) ? $GLOBALS['meta']['alea_ephemere_date'] : 0))
+		and (time() > _RENOUVELLE_ALEA + (isset($GLOBALS['meta']['alea_ephemere_date']) ? $GLOBALS['meta']['alea_ephemere_date'] : 0))
 	) {
 		// si on n'a pas l'acces en ecriture sur le cache,
 		// ne pas renouveller l'alea sinon le cache devient faux
@@ -156,7 +156,7 @@ function effacer_meta($nom, $table = 'meta') {
 	// c'est un peu moins bien qu'un vrai verrou mais ca suffira
 	// et utiliser une statique pour eviter des acces disques a repetition
 	static $touch = array();
-	$antidate = time()-(_META_CACHE_TIME << 4);
+	$antidate = time() - (_META_CACHE_TIME << 4);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);
 	}
@@ -212,7 +212,7 @@ function ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 
 	$GLOBALS[$table][$nom] = $valeur;
 	// cf effacer pour comprendre le double touch
-	$antidate = time()-(_META_CACHE_TIME << 1);
+	$antidate = time() - (_META_CACHE_TIME << 1);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);
 	}
