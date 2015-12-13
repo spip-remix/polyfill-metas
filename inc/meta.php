@@ -32,16 +32,16 @@ function inc_meta_dist($table = 'meta') {
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
 	$cache = cache_meta($table);
 
-	if ((_request('exec') !== 'install' OR !test_espace_prive())
-		AND $new = jeune_fichier($cache, _META_CACHE_TIME)
-		AND lire_fichier_securise($cache, $meta)
-		AND $meta = @unserialize($meta)
+	if ((_request('exec') !== 'install' or !test_espace_prive())
+		and $new = jeune_fichier($cache, _META_CACHE_TIME)
+		and lire_fichier_securise($cache, $meta)
+		and $meta = @unserialize($meta)
 	) {
 		$GLOBALS[$table] = $meta;
 	}
 
 	if (isset($GLOBALS[$table]['touch'])
-		AND ($GLOBALS[$table]['touch'] < time()-_META_CACHE_TIME)
+		and ($GLOBALS[$table]['touch'] < time()-_META_CACHE_TIME)
 	) {
 		$GLOBALS[$table] = array();
 	}
@@ -52,8 +52,8 @@ function inc_meta_dist($table = 'meta') {
 
 	// renouveller l'alea general si trop vieux ou sur demande explicite
 	if ((test_espace_prive() || isset($_GET['renouvelle_alea']))
-		AND $GLOBALS[$table]
-		AND (time() > _RENOUVELLE_ALEA+(isset($GLOBALS['meta']['alea_ephemere_date']) ? $GLOBALS['meta']['alea_ephemere_date'] : 0))
+		and $GLOBALS[$table]
+		and (time() > _RENOUVELLE_ALEA+(isset($GLOBALS['meta']['alea_ephemere_date']) ? $GLOBALS['meta']['alea_ephemere_date'] : 0))
 	) {
 		// si on n'a pas l'acces en ecriture sur le cache,
 		// ne pas renouveller l'alea sinon le cache devient faux
@@ -86,8 +86,8 @@ function lire_metas($table = 'meta') {
 		sql_free($result);
 
 		if (!isset($GLOBALS[$table]['charset'])
-			OR !$GLOBALS[$table]['charset']
-			OR $GLOBALS[$table]['charset'] == '_DEFAULT_CHARSET' // hum, correction d'un bug ayant abime quelques install
+			or !$GLOBALS[$table]['charset']
+			or $GLOBALS[$table]['charset'] == '_DEFAULT_CHARSET' // hum, correction d'un bug ayant abime quelques install
 		) {
 			ecrire_meta('charset', _DEFAULT_CHARSET, null, $table);
 		}
@@ -123,7 +123,7 @@ function lire_metas($table = 'meta') {
  **/
 function touch_meta($antidate = false, $table = 'meta') {
 	$file = cache_meta($table);
-	if (!$antidate OR !@touch($file, $antidate)) {
+	if (!$antidate or !@touch($file, $antidate)) {
 		$r = $GLOBALS[$table];
 		unset($r['alea_ephemere']);
 		unset($r['alea_ephemere_ancien']);
@@ -203,9 +203,9 @@ function ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 
 	// ne pas invalider le cache si affectation a l'identique
 	// (tant pis si impt aurait du changer)
-	if ($row AND $valeur == $row['valeur']
-		AND isset($GLOBALS[$table][$nom])
-		AND $GLOBALS[$table][$nom] == $valeur
+	if ($row and $valeur == $row['valeur']
+		and isset($GLOBALS[$table][$nom])
+		and $GLOBALS[$table][$nom] == $valeur
 	) {
 		return;
 	}
@@ -220,7 +220,7 @@ function ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 	// Gaffe aux tables sans impt (vieilles versions de SPIP notamment)
 	// ici on utilise pas sql_updateq et sql_insertq pour ne pas provoquer trop tot
 	// de lecture des descriptions des tables
-	if ($importable AND isset($row['impt'])) {
+	if ($importable and isset($row['impt'])) {
 		$r['impt'] = sql_quote($importable, '', 'text');
 	}
 	if ($row) {
@@ -275,7 +275,7 @@ function supprimer_table_meta($table, $force = false) {
 		return;
 	} // interdit !
 
-	if ($force OR !sql_countsel("spip_$table")) {
+	if ($force or !sql_countsel("spip_$table")) {
 		unset($GLOBALS[$table]);
 		sql_drop_table("spip_$table");
 		// vider le cache des tables
