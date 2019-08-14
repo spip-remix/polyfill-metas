@@ -32,7 +32,7 @@ function inc_meta_dist($table = 'meta') {
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
 	$cache = cache_meta($table);
 
-	if ((_request('exec') !== 'install' or !test_espace_prive())
+	if ((!$exec = _request('exec') or !autoriser_sans_cookie($exec))
 		and $new = jeune_fichier($cache, _META_CACHE_TIME)
 		and lire_fichier_securise($cache, $meta)
 		and $meta = @unserialize($meta)
