@@ -28,6 +28,7 @@ define('_META_CACHE_TIME', 1 << 24);
 
 // https://code.spip.net/@inc_meta_dist
 function inc_meta_dist($table = 'meta') {
+	$new = null;
 	// Lire les meta, en cache si present, valide et lisible
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
 	$cache = cache_meta($table);
@@ -56,7 +57,7 @@ function inc_meta_dist($table = 'meta') {
 	if (
 		(test_espace_prive() || isset($_GET['renouvelle_alea']))
 		and $GLOBALS[$table]
-		and (time() > _RENOUVELLE_ALEA + (isset($GLOBALS['meta']['alea_ephemere_date']) ? $GLOBALS['meta']['alea_ephemere_date'] : 0))
+		and (time() > _RENOUVELLE_ALEA + ($GLOBALS['meta']['alea_ephemere_date'] ?? 0))
 	) {
 		// si on n'a pas l'acces en ecriture sur le cache,
 		// ne pas renouveller l'alea sinon le cache devient faux
@@ -112,7 +113,7 @@ function lire_metas($table = 'meta') {
 		}
 	}
 
-	return isset($GLOBALS[$table]) ? $GLOBALS[$table] : null;
+	return $GLOBALS[$table] ?? null;
 }
 
 
@@ -128,7 +129,7 @@ function lire_metas($table = 'meta') {
 function touch_meta($antidate = false, $table = 'meta') {
 	$file = cache_meta($table);
 	if (!$antidate or !@touch($file, $antidate)) {
-		$r = isset($GLOBALS[$table]) ? $GLOBALS[$table] : [];
+		$r = $GLOBALS[$table] ?? [];
 		if ($table == 'meta') {
 			unset($r['alea_ephemere']);
 			unset($r['alea_ephemere_ancien']);
