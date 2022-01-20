@@ -26,7 +26,6 @@ if (!defined('_ECRIRE_INC_VERSION')) {
 // duree maximale du cache. Le double pour l'antidater
 define('_META_CACHE_TIME', 1 << 24);
 
-// https://code.spip.net/@inc_meta_dist
 function inc_meta_dist($table = 'meta') {
 	$new = null;
 	// Lire les meta, en cache si present, valide et lisible
@@ -78,7 +77,6 @@ function inc_meta_dist($table = 'meta') {
 // fonctions aussi appelees a l'install ==> spip_query en premiere requete
 // pour eviter l'erreur fatale (serveur non encore configure)
 
-// https://code.spip.net/@lire_metas
 function lire_metas($table = 'meta') {
 
 	if ($result = spip_query("SELECT nom,valeur FROM spip_$table")) {
