@@ -184,8 +184,9 @@ function effacer_meta($nom, $table = 'meta') {
  *     Nom de la meta
  * @param string $valeur
  *     Valeur à enregistrer
- * @param bool|null $importable
+ * @param string|null $importable
  *     Cette meta s'importe-elle avec une restauration de sauvegarde ?
+ *     'oui' ou 'non' 
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
  **/
