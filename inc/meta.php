@@ -64,7 +64,7 @@ function inc_meta_dist($table = 'meta') {
 			renouvelle_alea();
 			$new = false;
 		} else {
-			spip_log("impossible d'ecrire dans " . $cache);
+			spip_logger()->info("impossible d'ecrire dans " . $cache);
 		}
 	}
 	// et refaire le cache si on a du lire en base
