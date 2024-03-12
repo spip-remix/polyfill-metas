@@ -1,0 +1,40 @@
+{
+    "name": "spip-remix/polyfill-metas",
+    "description": "Gestion des métas de SPIP",
+    "license": "GPL-3.0-only",
+    "type": "spip-plugin",
+    "authors": [
+        {
+            "name": "JamesRezo",
+            "email": "james@rezo.net"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "psr/cache": "^3.0",
+        "psr/log": "^3.0",
+        "psr/simple-cache": "^3.0",
+        "spip-remix/contracts": "^0.1.x-dev"
+    },
+    "require-dev": {
+        "spip-remix/sdk": "^0.1.x-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "SpipRemix\\Polyfill\\Meta\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SpipRemix\\Polyfill\\Meta\\Test\\": "tests/"
+        },
+        "files": [
+            "inc/meta.php"
+        ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.27"
+        }
+    }
+}

@@ -1,22 +1,89 @@
 <?php
 
-/***************************************************************************\
- *  SPIP, Système de publication pour l'internet                           *
- *                                                                         *
- *  Copyright © avec tendresse depuis 2001                                 *
- *  Arnaud Martin, Antoine Pitrou, Philippe Rivière, Emmanuel Saint-James  *
- *                                                                         *
- *  Ce programme est un logiciel libre distribué sous licence GNU/GPL.     *
-\***************************************************************************/
+/**
+ * SPIP, Système de publication pour l'internet
+ *
+ * Copyright © avec tendresse depuis 2001
+ * Arnaud Martin, Antoine Pitrou, Philippe Rivière, Emmanuel Saint-James
+ *
+ * Ce programme est un logiciel libre distribué sous licence GNU/GPL.
+ */
+
+declare(strict_types=1);
+
+use SpipRemix\Contracts\MetaManagerInterface;
+use SpipRemix\Polyfill\Meta\CachedMetaManager;
 
 /**
- * Gestion des meta de configuration
- *
- * @package SPIP\Core\Configuration
- **/
+ * @internal Service d'appel à une table de métas.
+ */
+function _service_metas(string $table = 'meta'): MetaManagerInterface
+{
+    $table = $table == '' ? 'meta' : $table;
 
-if (!defined('_ECRIRE_INC_VERSION')) {
-	return;
+    /** @var array<string,MetaManagerInterface> $_meta */
+    static $_meta = [];
+
+    if (!isset($_meta[$table])) {
+        $GLOBALS[$table] = $GLOBALS[$table] ?? [];
+        $_meta[$table] = new CachedMetaManager($GLOBALS[$table]);
+        $_meta[$table]->setLogger(spip_logger());
+    }
+
+    return $_meta[$table];
+}
+
+/**
+ * Renvoie la valeur d'une méta.
+ *
+ * @api
+ *
+ * @param string $nom Nom de la méta
+ * @param mixed $default valeur par défaut si la méta n'existe pas
+ * @param string $table Table SQL d'enregistrement de la méta.
+ */
+function lire_meta(string $nom, mixed $default = null, string $table = 'meta'): mixed
+{
+    $table = $table == '' ? 'meta' : $table;
+    $valeur = $GLOBALS[$table][$nom] = _service_metas($table)->get($nom, $default);
+
+    return $valeur;
+}
+
+/**
+ * Met à jour ou crée une méta avec la clé et la valeur indiquée.
+ *
+ * @api
+ *
+ * @param string $nom Nom de la méta
+ * @param mixed $valeur Valeur à enregistrer
+ * @param bool $importable Cette méta s'importe-elle avec une restauration de sauvegarde, 'oui' ou 'non' ?
+ * @param string $table Table SQL d'enregistrement de la méta.
+ */
+function ecrire_meta(
+    string $nom,
+    mixed $valeur = null,
+    bool $importable = false,
+    string $table = 'meta'
+): void {
+    $table = $table == '' ? 'meta' : $table;
+    _service_metas($table)->set($nom, $valeur, $importable);
+    $GLOBALS[$table][$nom] =  _service_metas($table)->get($nom);
+}
+
+/**
+ * Supprime une méta.
+ *
+ * @api
+ *
+ * @param string $nom Nom de la meta
+ * @param string $table Table SQL d'enregistrement de la méta.
+ */
+function effacer_meta(string $nom, string $table = 'meta'): void
+{
+    $table = $table == '' ? 'meta' : $table;
+    _service_metas($table)->unset($nom);
+    unset($GLOBALS[$table][$nom]);
 }
 
 // Les parametres generaux du site sont dans une table SQL;
@@ -144,6 +211,8 @@ function touch_meta($antidate = false, $table = 'meta') {
 
 /**
  * Supprime une meta
+ * 
+ * @deprecated 0.1
  *
  * @see ecrire_config()
  * @see effacer_config()
@@ -154,7 +223,7 @@ function touch_meta($antidate = false, $table = 'meta') {
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
  **/
-function effacer_meta($nom, $table = 'meta') {
+function _effacer_meta($nom, $table = 'meta') {
 	// section critique sur le cache:
 	// l'invalider avant et apres la MAJ de la BD
 	// c'est un peu moins bien qu'un vrai verrou mais ca suffira
@@ -174,6 +243,8 @@ function effacer_meta($nom, $table = 'meta') {
 
 /**
  * Met à jour ou crée une meta avec la clé et la valeur indiquée
+ * 
+ * @deprecated 0.1
  *
  * @see ecrire_config()
  * @see effacer_config()
@@ -189,7 +260,7 @@ function effacer_meta($nom, $table = 'meta') {
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
  **/
-function ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
+function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 
 	static $touch = [];
 	if (!$nom) {

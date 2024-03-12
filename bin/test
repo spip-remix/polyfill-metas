@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+dump(['dump' => 1, 'table' => 'meta', 'all' => _service_metas()->all()]);
+dump(['dump' => 2, 'table' => 'meta', 'charset' => lire_meta('charset')]);
+
+ecrire_meta('charset', 'utf-8');
+dump(['dump' => 3, 'table' => 'meta', 'GLOBALS[charset]' => $GLOBALS['meta']['charset']]);
+dump(['dump' => 4, 'table' => 'meta', 'all' => _service_metas()->all()]);
+
+ecrire_meta('charset', 'iso-8859-1');
+dump(['dump' => 5, 'table' => 'meta', 'charset' => $GLOBALS['meta']['charset']]); // iso-8859-1
+
+effacer_meta('charset');
+dump(['dump' => 6, 'table' => 'meta', 'GLOBALS[charset]' => $GLOBALS['meta']['charset']]); //PHP Warning:  Undefined array key "charset"
+@dump(['dump' => 7, 'table' => 'meta', 'GLOBALS[charset]' => $GLOBALS['meta']['charset']]); //PHP Warning masqué
+dump(['dump' => 8, 'table' => 'meta', 'charset' => $GLOBALS['meta']['charset'] ?? null]); // Pas de warning
+dump(['dump' => 9, 'table' => 'meta', 'charset' => lire_meta('charset')]);
+
+ecrire_meta('charset', 'utf-8');
+ecrire_meta('charset', 'iso-8859-1', false, 'autre');
+dump(['dump' => 10, 'table' => 'autre', 'all' => _service_metas('autre')->all()]);
+dump(['dump' => 11, 'table' => 'autre', 'charset' => lire_meta('charset', 'utf-8', 'autre')]);
+dump(['dump' => 12, 'table' => 'meta', 'charset' => lire_meta('charset')]);
+dump(['dump' => 13, 'table' => 'meta', 'all' => _service_metas()->all()]);
