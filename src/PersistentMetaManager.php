@@ -8,6 +8,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use SpipRemix\Contracts\MetaManagerInterface;
+use SpipRemix\Contracts\MetaManagerTrait;
 
 /**
  * Undocumented class.
@@ -16,10 +17,10 @@ use SpipRemix\Contracts\MetaManagerInterface;
  *
  * @author JamesRezo <james@rezo.net>
  */
-class CachedMetaManager implements MetaManagerInterface, LoggerAwareInterface
+class PersistentMetaManager implements MetaManagerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    use DecoratedMetaManagerTrait;
+    use MetaManagerTrait;
 
     /**
      * @internal
@@ -27,10 +28,5 @@ class CachedMetaManager implements MetaManagerInterface, LoggerAwareInterface
     public function getLogger(): ?LoggerInterface
     {
         return $this->logger;
-    }
-
-    public function beep(): void
-    {
-        $this->logger?->alert('coucou');
     }
 }

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 use SpipRemix\Contracts\MetaManagerInterface;
 use SpipRemix\Polyfill\Meta\CachedMetaManager;
+use SpipRemix\Polyfill\Meta\FileMetaManager;
+use SpipRemix\Polyfill\Meta\PersistentMetaManager;
 
 /**
  * @internal Service d'appel à une table de métas.
@@ -26,7 +28,13 @@ function _service_metas(string $table = 'meta'): MetaManagerInterface
 
     if (!isset($_meta[$table])) {
         $GLOBALS[$table] = $GLOBALS[$table] ?? [];
-        $_meta[$table] = new CachedMetaManager($GLOBALS[$table]);
+		$cache = new CachedMetaManager(
+			new FileMetaManager(
+				new PersistentMetaManager($GLOBALS[$table])
+			)
+		);
+        $_meta[$table] = $cache;
+        // $_meta[$table] = new CachedMetaManager($GLOBALS[$table]);
         $_meta[$table]->setLogger(spip_logger());
     }
 

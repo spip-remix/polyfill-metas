@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace SpipRemix\Polyfill\Meta\Test;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use SpipRemix\Polyfill\Meta\DecoratedMetaManagerTrait;
 
 #[CoversFunction('lire_meta')]
 #[CoversFunction('ecrire_meta')]
 #[CoversFunction('effacer_meta')]
 #[CoversFunction('_service_metas')]
+#[CoversClass(DecoratedMetaManagerTrait::class)]
 class IncMetaTest extends TestCase
 {
     public function setUp(): void

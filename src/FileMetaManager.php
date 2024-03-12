@@ -16,7 +16,7 @@ use SpipRemix\Contracts\MetaManagerInterface;
  *
  * @author JamesRezo <james@rezo.net>
  */
-class CachedMetaManager implements MetaManagerInterface, LoggerAwareInterface
+class FileMetaManager implements MetaManagerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
     use DecoratedMetaManagerTrait;
@@ -27,10 +27,5 @@ class CachedMetaManager implements MetaManagerInterface, LoggerAwareInterface
     public function getLogger(): ?LoggerInterface
     {
         return $this->logger;
-    }
-
-    public function beep(): void
-    {
-        $this->logger?->alert('coucou');
     }
 }

@@ -8,6 +8,7 @@
   - un sous-ensemble des "parameters" du container principale de l'application
   - ...
 - on dit une méta (dans les docblocks)
+- les métas sont aussi appelées "Les paramètres généraux du site" (dans les docblocks)
 
 ## Fichier
 
@@ -18,7 +19,7 @@
 - -> Plugin (dist)
 - -> données stockées dans une globale, récupérer depuis un fichier (+serialisation) sinon en base
   - -> attention au format de serialisation entre tableau et objet (invalider le cache lors d'une miise à jour)
-- -> en fait, le cache, c'est la globale, le fichier, c'est le moyen du partage, la base, la persistence
+- -> en fait, le cache, c'est la globale, le fichier, c'est le moyen du partage, la base, la persistance
 - -> si chaine de responsabilité: globales(cache)->fichier->base en lecture, inverse pour écriture
 - -> en lecture, fichier et base sont accédés pour toutes les métas, à l'unité en ecriture
 
