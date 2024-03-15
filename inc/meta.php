@@ -11,31 +11,45 @@
 
 declare(strict_types=1);
 
+use Spip\Component\Filesystem\Filesystem;
 use SpipRemix\Contracts\MetaManagerInterface;
-use SpipRemix\Polyfill\Meta\CachedMetaManager;
 use SpipRemix\Polyfill\Meta\FileMetaManager;
+use SpipRemix\Polyfill\Meta\NativeSerializer;
 use SpipRemix\Polyfill\Meta\PersistentMetaManager;
+use SpipRemix\Polyfill\Meta\SecuredFileSerializer;
 
 /**
  * @internal Service d'appel à une table de métas.
  */
 function _service_metas(string $table = 'meta'): MetaManagerInterface
 {
+	/**
+	 * @todo Manque le context SPIP
+	 */
+	$tmpDir = '';
+	$cacheDir = '';
+
     $table = $table == '' ? 'meta' : $table;
+    $cacheFilename = $table == 'meta' ? '{tmpDir}/meta_cache.php' : '{cacheDir}/{table}.php';
+	/** @var non-empty-string $cacheFilename */
+	$cacheFilename = str_replace(['{tmpDir}', '{cacheDir}', '{table}'], [$tmpDir, $cacheDir, $table], $cacheFilename);
 
     /** @var array<string,MetaManagerInterface> $_meta */
     static $_meta = [];
 
     if (!isset($_meta[$table])) {
         $GLOBALS[$table] = $GLOBALS[$table] ?? [];
-		$cache = new CachedMetaManager(
-			new FileMetaManager(
-				new PersistentMetaManager($GLOBALS[$table])
-			)
-		);
-        $_meta[$table] = $cache;
-        // $_meta[$table] = new CachedMetaManager($GLOBALS[$table]);
-        $_meta[$table]->setLogger(spip_logger());
+		$metas = new PersistentMetaManager($GLOBALS[$table]);
+		$metas->setLogger(spip_logger());
+		$cache = new FileMetaManager($metas);
+		$cache->setSerializer(new SecuredFileSerializer(
+			new Filesystem(),
+			new NativeSerializer,
+			$cacheFilename
+		));
+		$cache->boot();
+
+		$_meta[$table] = $cache;
     }
 
     return $_meta[$table];
@@ -94,13 +108,22 @@ function effacer_meta(string $nom, string $table = 'meta'): void
     unset($GLOBALS[$table][$nom]);
 }
 
-// Les parametres generaux du site sont dans une table SQL;
-// Recopie dans le tableau PHP global meta, car on en a souvent besoin
+/**
+ * Boot des métas.
+ *
+ * Les paramètres généraux du site sont dans une table SQL
+ * mis en cache dans un fichier
+ * et recopiés dans le tableau PHP global `meta`, car on en a souvent besoin
+ */
+function inc_meta_dist(string $table = 'meta'): void
+{
+    _service_metas($table);
+}
 
-// duree maximale du cache. Le double pour l'antidater
-define('_META_CACHE_TIME', 1 << 24);
-
-function inc_meta_dist($table = 'meta') {
+/**
+ * @deprecated 0.1
+ */
+function _inc_meta_dist($table = 'meta') {
 	$new = null;
 	// Lire les meta, en cache si present, valide et lisible
 	// en cas d'install ne pas faire confiance au meta_cache eventuel

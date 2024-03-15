@@ -8,7 +8,6 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use SpipRemix\Contracts\MetaManagerInterface;
-use SpipRemix\Contracts\MetaManagerTrait;
 
 /**
  * Undocumented class.
@@ -17,16 +16,12 @@ use SpipRemix\Contracts\MetaManagerTrait;
  *
  * @author JamesRezo <james@rezo.net>
  */
-class PersistentMetaManager implements MetaManagerInterface, LoggerAwareInterface
+class PersistentMetaManager implements MetaManagerInterface
 {
-    use LoggerAwareTrait;
     use MetaManagerTrait;
 
-    /**
-     * @internal
-     */
-    public function getLogger(): ?LoggerInterface
+    public function boot(): void
     {
-        return $this->logger;
+        // SELECT * FROM spip_meta;
     }
 }

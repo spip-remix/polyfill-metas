@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SpipRemix\Polyfill\Meta;
 
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use SpipRemix\Contracts\MetaManagerInterface;
 
 /**
@@ -15,6 +17,7 @@ use SpipRemix\Contracts\MetaManagerInterface;
  */
 trait DecoratedMetaManagerTrait
 {
+    use LoggerAwareTrait;
     private MetaManagerInterface $decorated;
 
     /**
@@ -27,7 +30,22 @@ trait DecoratedMetaManagerTrait
         array $importables = [],
     ) {
         $this->decorated = $decorated ?? new PersistentMetaManager($metas, $importables);
-        // $this->decorated->setLogger($decorated->getLogger());
+        if (!\is_null($this->decorated->getLogger())) {
+            $this->setLogger($this->decorated->getLogger());
+        }
+    }
+
+    /**
+     * Démarrage du MetaManager.
+     */
+    abstract public function boot(): void;
+
+    /**
+     * @internal
+     */
+    public function getLogger(): ?LoggerInterface
+    {
+        return $this->logger;
     }
 
     public function all(): array

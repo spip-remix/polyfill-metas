@@ -55,3 +55,42 @@
 - `2.0` suppression de `$GLOBALS['meta']`
 - que faire des fonctions `inc_meta_dist`, `ecrire_meta` et `effacer_meta` dans l'avenir ?
 - `lire_metas()` et `touch_meta()` peuvent devenir @internal, mais quand ? pour `1.0` ou `2.0` ?
+
+## Cache
+
+- GLOBALS (le temps de nettoyer les $GLOBALS['meta']) c'est une copie de la mémoisation dans le MetaManager
+- RAM pour globale (CachedMetaManager) ne devrait pas rester car c'est les fonctions historiques qui synchronise la globale ci-dessus et qui vont chercher dans le cache  mémoïsé du PersistentMetaManager donc pas de TTL à gérer
+- Fichier (FileMetaManager) stocke une sérialisation de all() dans un fichier PHP: TTL commun à toutes les méta: constante _META_CACHE_TIME
+
+- MetaManager final (PersistentMetaManager) cache mémoïsé de base
+
+- le clear(), le unset et le set (écriture)
+- le clear() de FileMetaManager efface le fichier. Ça doit forcer le rafraichissement du fichier et de la mémo (et donc de la globale)
+- le all() et le get() c'est de la lecture
+
+le fichier `ecrire/base/objets.php` décrit la table SQL `spip_meta`: <https://git.spip.net/spip/spip/-/blob/master/ecrire/base/objets.php#L562>
+
+- clé primaire `nom` VARCHAR(255) NOT NULL
+- champ `valeur` text '' par défaut (valeur doit être sérialisée pour être stockée)
+- champ `impt` = ENUM 'oui'/'non' 'oui' par défaut (importable est true par défaut quand on set())
+- champ `maj` = TIMESTAMP (commun avec articles, auteurs, rubriques et resultats?)
+- pas d'autres index que le primary
+
+dans SQLite3, MySQL, MariaDB et PostgreSQL
+VARCHAR
+text
+TIMESTAMP mise à jour automatique à l'INSERT et à l'UPDATE
+<https://dev.mysql.com/doc/refman/8.0/en/datetime.html>
+<https://www.sourcetrail.com/fr/sql/mise-%C3%A0-jour-automatique-SQL-dupdated_at/>
+ENUM dans SQLite3, MySQL, MariaDB et PostgreSQL
+
+```sql
+-- Donne la date de dernière mise à jour de la table.
+SELECT MAX(maj) AS recent FROM spip_meta;
+```
+
+```php
+// Lit la date de dernière modification du fichier
+// function filemtime(string $filename): int|false
+$recent = filemtime($cacheFilename);
+```

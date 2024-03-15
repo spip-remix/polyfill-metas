@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace SpipRemix\Polyfill\Meta;
 
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
+use SpipRemix\Contracts\EncoderInterface;
 use SpipRemix\Contracts\MetaManagerInterface;
 
 /**
@@ -16,16 +14,27 @@ use SpipRemix\Contracts\MetaManagerInterface;
  *
  * @author JamesRezo <james@rezo.net>
  */
-class FileMetaManager implements MetaManagerInterface, LoggerAwareInterface
+class FileMetaManager implements MetaManagerInterface
 {
-    use LoggerAwareTrait;
     use DecoratedMetaManagerTrait;
+    // Durée maximale du cache. Le double pour l'antidater
+    public const CACHE_PERIOD = 1 << 24;
 
-    /**
-     * @internal
-     */
-    public function getLogger(): ?LoggerInterface
+    private EncoderInterface $serializer;
+
+    public function setSerializer(EncoderInterface $serializer): void
     {
-        return $this->logger;
+        $this->serializer = $serializer;
+    }
+
+    public function boot(): void
+    {
+        $timestamp = $this->serializer->getTimestamp();
+        if (time() - $timestamp < self::CACHE_PERIOD) {
+            $all = $this->serializer->decode(''); //c'est décode qui doit faire mtime et renvoyer null si absent ou vieux, comment envoyer le cache period ?
+            $this->decorated->with($all);
+            return;
+        }
+        $this->decorated->boot();
     }
 }
