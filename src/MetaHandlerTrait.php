@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SpipRemix\Polyfill\Meta;
 
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -12,14 +13,15 @@ use Psr\Log\LoggerInterface;
  *
  * @author JamesRezo <james@rezo.net>
  */
-trait MetaManagerTrait
+trait MetaHandlerTrait
 {
     use LoggerAwareTrait;
 
+    private ClockInterface $clock;
+
     /**
-     * @todo peut-être éviter un constructeur ici (class abstraite dans le polyfill?)
+     * @todo Éviter un constructeur ici. Utilliser with() si besoin
      * @todo mono tableau pour les valeurs et l'importabilité ?
-     * @todo ajouter le timestamp maj ?
      * @todo class Meta ?
      */
     public function __construct(
@@ -27,11 +29,52 @@ trait MetaManagerTrait
         private array $metas = [],
         /** @var array<string,bool> $metas */
         private array $importables = [],
+        private ?int $mtime = null,
+        ?ClockInterface $clock = null,
     ) {
+        $this->clock = $clock ?? new class () implements ClockInterface {
+            public function now(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('now');
+            }
+        };
+        if (\is_null($mtime)) {
+            $this->mtime = (int) $this->clock->now()->format('U');
+        }
     }
 
+    /**
+     * @param list<array{name:non-empty-string,value:mixed,importable?:bool}> $metas
+     */
+    public static function with(array $metas = []): static
+    {
+        $metas = [];
+        $importables = [];
+
+        foreach ($metas as $meta) {
+            $metas[$meta['name']] = $meta['value'];
+            $importables[$meta['name']] = $meta['importable'] ?? true;
+        }
+
+        return new static($metas, $importables);
+    }
+
+    /**
+     * @throws MetaHandlerException
+     */
     abstract public function boot(): void;
 
+    /**
+     * @return null|positive-int
+     */
+    public function lastModified(): ?int
+    {
+        return $this->mtime;
+    }
+
+    /**
+     * @internal Undocumented function.
+     */
     public function getLogger(): ?LoggerInterface
     {
         return $this->logger;
@@ -48,7 +91,7 @@ trait MetaManagerTrait
         return $metas;
     }
 
-    public function get(string $name, mixed $default = null): mixed
+    public function read(string $name, mixed $default = null): mixed
     {
         if (array_key_exists($name, $this->metas)) {
             return $this->metas[$name];
@@ -57,19 +100,21 @@ trait MetaManagerTrait
         return $default;
     }
 
-    public function set(string $name, mixed $value = null, bool $importable = true): void
+    public function write(string $name, mixed $value, bool $importable = true): bool
     {
         $this->metas[$name] = $value;
         $this->importables[$name] = $importable;
+
+        return true;
     }
 
-    public function clear(): void
+    public function clean(): void
     {
         $this->metas = [];
         $this->importables = [];
     }
 
-    public function unset(string $name): void
+    public function erase(string $name): void
     {
         unset($this->metas[$name]);
         unset($this->importables[$name]);
@@ -87,18 +132,5 @@ trait MetaManagerTrait
     {
         $this->metas = $data['metas'];
         $this->importables = $data['importables'];
-    }
-
-    /**
-     * Affecter un lot de métas (lors du boot par exemple).
-     *
-     * @param list<array{name:non-empty-string,value:mixed,importable:bool}> $metas
-     */
-    protected function with(array $metas): void
-    {
-        foreach ($metas as $meta) {
-            $this->metas[$meta['name']] = $meta['value'];
-            $this->importables[$meta['name']] = $meta['importable'];
-        }
     }
 }

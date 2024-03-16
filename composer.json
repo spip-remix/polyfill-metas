@@ -12,6 +12,7 @@
     "require": {
         "php": ">=8.1",
         "psr/cache": "^3.0",
+        "psr/clock": "^1.0",
         "psr/log": "^3.0",
         "psr/simple-cache": "^3.0",
         "spip-remix/contracts": "^0.1.x-dev",
@@ -19,6 +20,12 @@
     },
     "require-dev": {
         "spip-remix/sdk": "^0.1.x-dev"
+    },
+    "repositories": {
+        "spip": {
+            "type": "composer",
+            "url": "https://get.spip.net/composer/"
+        }
     },
     "autoload": {
         "psr-4": {
@@ -36,12 +43,6 @@
     "config": {
         "platform": {
             "php": "8.1.27"
-        }
-    },
-    "repositories": {
-        "spip": {
-            "type": "composer",
-            "url": "https://get.spip.net/composer/"
         }
     }
 }
