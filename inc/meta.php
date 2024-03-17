@@ -180,6 +180,15 @@ function _inc_meta_dist($table = 'meta')
 // fonctions aussi appelees a l'install ==> spip_query en premiere requete
 // pour eviter l'erreur fatale (serveur non encore configure)
 
+/**
+ * Undocumented function
+ * 
+ * @api
+ * @deprecated 0.1
+ *
+ * @param string $table
+ * @return void
+ */
 function lire_metas($table = 'meta')
 {
 
@@ -270,7 +279,7 @@ function touch_meta(?int $antidate = null, string $table = 'meta'): void
  *     Nom de la meta
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
- **/
+ */
 function _effacer_meta($nom, $table = 'meta')
 {
 	/** @var FileMetaHandler $service_meta */
@@ -314,7 +323,7 @@ function _effacer_meta($nom, $table = 'meta')
  *     'oui' ou 'non'
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
- **/
+ */
 function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta')
 {
 	/** @var FileMetaHandler $service_meta */
@@ -375,6 +384,9 @@ function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta')
 
 /**
  * Installer une table de configuration supplementaire
+ * 
+ * @api
+ * @deprecated 0.1
  *
  * @param string $table
  */
@@ -392,6 +404,9 @@ function installer_table_meta($table)
 
 /**
  * Supprimer une table de configuration supplémentaire
+ * 
+ * @api
+ * @deprecated 0.1
  *
  * Si $force=true, on ne verifie pas qu'elle est bien vide
  *
