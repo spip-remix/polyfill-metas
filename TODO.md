@@ -35,7 +35,7 @@ meta['charset] -> ?
 
 - `spip_logger()`
   - -> psr/log LoggerAwareInterface et LoggerAwareTrait
-  - -> attention, c'est peut-être de la mauvaise ségrégation d'interface d'étendre LoggerAwareInterface avec MetaManagerInterface
+  - -> attention, c'est peut-être de la mauvaise ségrégation d'interface d'étendre LoggerAwareInterface avec MetaHandlerInterface
 - `_request()`, `autoriser_sans_cookie()`, `jeune_fichier()` -> lire le fichier de cache pour initialiser la globale 'meta'
 - `test_espace_prive()`, `supprimer_fichier()`, `renouvelle_alea()` -> renouvellement d'alea
 - `spip_query()` @deprecated
@@ -57,8 +57,8 @@ meta['charset] -> ?
 
 ### Filesystem
 
-- `_FILE_META` -> si {table}==='meta' -> `{tmp/}meta_cache.php` @see meta_cache()
-- `_DIR_CACHE` -> si {table}!=='meta' -> `{tmp/cache/}{table}.php`
+- `_FILE_META` -> si {table}==='meta' -> `{tmpDir}/meta_cache.php` @see meta_cache()
+- `_DIR_CACHE` -> si {table}!=='meta' -> `{cacheDir}/{table}.php`
 
 ### SQL
 

@@ -72,9 +72,6 @@ trait MetaHandlerTrait
         return $this->mtime;
     }
 
-    /**
-     * @internal Undocumented function.
-     */
     public function getLogger(): ?LoggerInterface
     {
         return $this->logger;
@@ -108,16 +105,20 @@ trait MetaHandlerTrait
         return true;
     }
 
-    public function clean(): void
+    public function clean(): bool
     {
         $this->metas = [];
         $this->importables = [];
+
+        return true;
     }
 
-    public function erase(string $name): void
+    public function erase(string $name): bool
     {
         unset($this->metas[$name]);
         unset($this->importables[$name]);
+
+        return true;
     }
 
     public function __serialize(): array

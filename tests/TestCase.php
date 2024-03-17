@@ -3,14 +3,14 @@
 namespace SpipRemix\Polyfill\Meta\Test;
 
 use PHPUnit\Framework\TestCase as FrameworkTestCase;
-use SpipRemix\Component\Sdk\Mock\MetaManagerMock;
-use SpipRemix\Contracts\MetaManagerInterface;
+use SpipRemix\Component\Sdk\Mock\MetaHandlerMock;
+use SpipRemix\Contracts\MetaHandlerInterface;
 
 class TestCase extends FrameworkTestCase
 {
-    public function getMetaManagerMock()
+    public function getMetaHandlerMock()
     {
-        $mock = new MetaManagerMock([
+        $mock = new MetaHandlerMock([
             'dummy' => 'test',
         ], [
             'dummy' => true,
@@ -25,7 +25,7 @@ class TestCase extends FrameworkTestCase
      *
      * @param string $what 'valeur' par défaut, autre possibilité: 'importable'
      */
-    public function filter(MetaManagerInterface $metas, string $name, string $what = 'valeur'): mixed
+    public function filter(MetaHandlerInterface $metas, string $name, string $what = 'valeur'): mixed
     {
         if (!\in_array($what, ['valeur', 'importable'])) {
             return null;

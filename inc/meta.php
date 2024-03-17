@@ -12,47 +12,43 @@
 declare(strict_types=1);
 
 use Spip\Component\Filesystem\Filesystem;
-use SpipRemix\Contracts\MetaManagerInterface;
-use SpipRemix\Polyfill\Meta\FileMetaManager;
-use SpipRemix\Polyfill\Meta\NativeSerializer;
-use SpipRemix\Polyfill\Meta\PersistentMetaManager;
-use SpipRemix\Polyfill\Meta\SecuredFileSerializer;
+use SpipRemix\Component\Serializer\NativeSerializer;
+use SpipRemix\Component\Serializer\SecuredFileSerializer;
+use SpipRemix\Contracts\MetaHandlerInterface;
+use SpipRemix\Polyfill\Meta\FileMetaHandler;
+use SpipRemix\Polyfill\Meta\PersistentMetaHandler;
 
 /**
  * @internal Service d'appel à une table de métas.
  */
-function _service_metas(string $table = 'meta'): MetaManagerInterface
+function _service_metas(string $table = 'meta'): MetaHandlerInterface
 {
 	/**
 	 * @todo Manque le context SPIP
 	 */
-	$tmpDir = '';
-	$cacheDir = '';
+	$tmpDir = constant('_DIR_TMP') ?? '';
+	$cacheDir = constant('_DIR_CACHE') ?? '';
 
-    $table = $table == '' ? 'meta' : $table;
-    $cacheFilename = $table == 'meta' ? '{tmpDir}/meta_cache.php' : '{cacheDir}/{table}.php';
-	/** @var non-empty-string $cacheFilename */
-	$cacheFilename = str_replace(['{tmpDir}', '{cacheDir}', '{table}'], [$tmpDir, $cacheDir, $table], $cacheFilename);
+	$table = $table == '' ? 'meta' : $table;
 
-    /** @var array<string,MetaManagerInterface> $_meta */
-    static $_meta = [];
+	/** @var array<string,MetaHandlerInterface> $_meta */
+	static $_meta = [];
 
-    if (!isset($_meta[$table])) {
-        $GLOBALS[$table] = $GLOBALS[$table] ?? [];
-		$metas = new PersistentMetaManager($GLOBALS[$table]);
+	if (!isset($_meta[$table])) {
+		$GLOBALS[$table] = $GLOBALS[$table] ?? [];
+		$metas = new PersistentMetaHandler($GLOBALS[$table]); // Pas de data à l'instanciation !
 		$metas->setLogger(spip_logger());
-		$cache = new FileMetaManager($metas);
+		$cache = new FileMetaHandler($metas);
 		$cache->setSerializer(new SecuredFileSerializer(
 			new Filesystem(),
 			new NativeSerializer,
-			$cacheFilename
+			$cache->getCacheFilename($tmpDir, $cacheDir, $table),
 		));
-		$cache->boot();
 
 		$_meta[$table] = $cache;
-    }
+	}
 
-    return $_meta[$table];
+	return $_meta[$table];
 }
 
 /**
@@ -60,16 +56,16 @@ function _service_metas(string $table = 'meta'): MetaManagerInterface
  *
  * @api
  *
- * @param string $nom Nom de la méta
- * @param mixed $default valeur par défaut si la méta n'existe pas
- * @param string $table Table SQL d'enregistrement de la méta.
+ * @param string $nom     Nom de la méta
+ * @param mixed  $default Valeur par défaut si la méta n'existe pas
+ * @param string $table   Table SQL d'enregistrement de la méta.
  */
 function lire_meta(string $nom, mixed $default = null, string $table = 'meta'): mixed
 {
-    $table = $table == '' ? 'meta' : $table;
-    $valeur = $GLOBALS[$table][$nom] = _service_metas($table)->get($nom, $default);
+	$table = $table == '' ? 'meta' : $table;
+	$valeur = $GLOBALS[$table][$nom] = _service_metas($table)->read($nom, $default);
 
-    return $valeur;
+	return $valeur;
 }
 
 /**
@@ -77,20 +73,20 @@ function lire_meta(string $nom, mixed $default = null, string $table = 'meta'): 
  *
  * @api
  *
- * @param string $nom Nom de la méta
- * @param mixed $valeur Valeur à enregistrer
- * @param bool $importable Cette méta s'importe-elle avec une restauration de sauvegarde, 'oui' ou 'non' ?
- * @param string $table Table SQL d'enregistrement de la méta.
+ * @param string $nom        Nom de la méta
+ * @param mixed  $valeur     Valeur à enregistrer
+ * @param bool   $importable Cette méta s'importe-elle avec une restauration de sauvegarde, 'oui' ou 'non' ?
+ * @param string $table      Table SQL d'enregistrement de la méta.
  */
 function ecrire_meta(
-    string $nom,
-    mixed $valeur = null,
-    bool $importable = false,
-    string $table = 'meta'
+	string $nom,
+	mixed $valeur = null,
+	bool $importable = false,
+	string $table = 'meta'
 ): void {
-    $table = $table == '' ? 'meta' : $table;
-    _service_metas($table)->set($nom, $valeur, $importable);
-    $GLOBALS[$table][$nom] =  _service_metas($table)->get($nom);
+	$table = $table == '' ? 'meta' : $table;
+	_service_metas($table)->write($nom, $valeur, $importable);
+	$GLOBALS[$table][$nom] =  _service_metas($table)->read($nom);
 }
 
 /**
@@ -103,9 +99,9 @@ function ecrire_meta(
  */
 function effacer_meta(string $nom, string $table = 'meta'): void
 {
-    $table = $table == '' ? 'meta' : $table;
-    _service_metas($table)->unset($nom);
-    unset($GLOBALS[$table][$nom]);
+	$table = $table == '' ? 'meta' : $table;
+	_service_metas($table)->erase($nom);
+	unset($GLOBALS[$table][$nom]);
 }
 
 /**
@@ -117,30 +113,34 @@ function effacer_meta(string $nom, string $table = 'meta'): void
  */
 function inc_meta_dist(string $table = 'meta'): void
 {
-    _service_metas($table);
+	_service_metas($table)->boot();
 }
 
 /**
  * @deprecated 0.1
  */
-function _inc_meta_dist($table = 'meta') {
+function _inc_meta_dist($table = 'meta')
+{
+	/** @var FileMetaHandler $service_meta */
+	$service_meta = _service_metas($table);
 	$new = null;
 	// Lire les meta, en cache si present, valide et lisible
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
-	$cache = cache_meta($table);
+	// $cache = $service_meta->getCacheFilename(constant('_DIR_TMP') ?? '', constant('_DIR_CACHE') ?? '', $table);
+	$cache = 'tmp/meta_cache.php';
 
 	if (
 		(!($exec = _request('exec')) || !autoriser_sans_cookie($exec))
-		 && ($new = jeune_fichier($cache, _META_CACHE_TIME))
-		 && lire_fichier_securise($cache, $meta)
-		 && ($meta = @unserialize($meta))
+		&& ($new = jeune_fichier($cache, $service_meta::CACHE_PERIOD))
+		&& lire_fichier_securise($cache, $meta)
+		&& ($meta = @unserialize($meta))
 	) {
 		$GLOBALS[$table] = $meta;
 	}
 
 	if (
 		isset($GLOBALS[$table]['touch'])
-		&& $GLOBALS[$table]['touch'] < time() - _META_CACHE_TIME
+		&& $GLOBALS[$table]['touch'] < time() - $service_meta::CACHE_PERIOD
 	) {
 		$GLOBALS[$table] = [];
 	}
@@ -174,7 +174,8 @@ function _inc_meta_dist($table = 'meta') {
 // fonctions aussi appelees a l'install ==> spip_query en premiere requete
 // pour eviter l'erreur fatale (serveur non encore configure)
 
-function lire_metas($table = 'meta') {
+function lire_metas($table = 'meta')
+{
 
 	if ($result = spip_query("SELECT nom,valeur FROM spip_$table")) {
 		include_spip('base/abstract_sql');
@@ -189,7 +190,7 @@ function lire_metas($table = 'meta') {
 			|| !$GLOBALS[$table]['charset']
 			|| $GLOBALS[$table]['charset'] == '_DEFAULT_CHARSET' // hum, correction d'un bug ayant abime quelques install
 		) {
-			ecrire_meta('charset', _DEFAULT_CHARSET, null, $table);
+			ecrire_meta('charset', _DEFAULT_CHARSET, true, $table);
 		}
 
 		// noter cette table de configuration dans les meta de SPIP
@@ -215,14 +216,20 @@ function lire_metas($table = 'meta') {
 /**
  * Mettre en cache la liste des meta, sauf les valeurs sensibles
  * pour qu'elles ne soient pas visibiles dans un fichier (souvent en 777)
+ * 
+ * @deprecated 0.1
  *
  * @param bool|int $antidate
  *      Date de modification du fichier à appliquer si indiqué (timestamp)
  * @param string $table
  *      Table SQL d'enregistrement des meta.
  **/
-function touch_meta($antidate = false, $table = 'meta') {
-	$file = cache_meta($table);
+function touch_meta($antidate = false, $table = 'meta')
+{
+	/** @var FileMetaHandler $service_meta */
+	$service_meta = _service_metas($table);
+
+	$file = $service_meta->getCacheFilename(constant('_DIR_TMP') ?? '', constant('_DIR_CACHE') ?? '', $table);
 	if (!$antidate || !@touch($file, $antidate)) {
 		$r = $GLOBALS[$table] ?? [];
 		if ($table == 'meta') {
@@ -254,13 +261,17 @@ function touch_meta($antidate = false, $table = 'meta') {
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
  **/
-function _effacer_meta($nom, $table = 'meta') {
+function _effacer_meta($nom, $table = 'meta')
+{
+	/** @var FileMetaHandler $service_meta */
+	$service_meta = _service_metas($table);
+
 	// section critique sur le cache:
 	// l'invalider avant et apres la MAJ de la BD
 	// c'est un peu moins bien qu'un vrai verrou mais ca suffira
 	// et utiliser une statique pour eviter des acces disques a repetition
 	static $touch = [];
-	$antidate = time() - (_META_CACHE_TIME << 4);
+	$antidate = time() - ($service_meta::CACHE_PERIOD << 4);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);
 	}
@@ -291,7 +302,10 @@ function _effacer_meta($nom, $table = 'meta') {
  * @param string $table
  *     Table SQL d'enregistrement de la meta.
  **/
-function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
+function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta')
+{
+	/** @var FileMetaHandler $service_meta */
+	$service_meta = _service_metas($table);
 
 	static $touch = [];
 	if (!$nom) {
@@ -321,7 +335,7 @@ function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 
 	$GLOBALS[$table][$nom] = $valeur;
 	// cf effacer pour comprendre le double touch
-	$antidate = time() - (_META_CACHE_TIME << 1);
+	$antidate = time() - ($service_meta::CACHE_PERIOD << 1);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);
 	}
@@ -344,23 +358,12 @@ function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta') {
 }
 
 /**
- * Retourne le nom du fichier cache d'une table SQL de meta
- *
- * @param string $table
- *     Table SQL d'enregistrement des meta.
- * @return string
- *     Nom du fichier cache
- **/
-function cache_meta($table = 'meta') {
-	return ($table == 'meta') ? _FILE_META : (_DIR_CACHE . $table . '.php');
-}
-
-/**
  * Installer une table de configuration supplementaire
  *
  * @param string $table
  */
-function installer_table_meta($table) {
+function installer_table_meta($table)
+{
 	$trouver_table = charger_fonction('trouver_table', 'base');
 	if (!$trouver_table("spip_$table")) {
 		include_spip('base/auxiliaires');
@@ -379,7 +382,12 @@ function installer_table_meta($table) {
  * @param string $table
  * @param bool $force
  */
-function supprimer_table_meta($table, $force = false) {
+function supprimer_table_meta($table, $force = false)
+{
+	/** @var FileMetaHandler $service_meta */
+	$service_meta = _service_metas($table);
+	$cache = $service_meta->getCacheFilename(constant('_DIR_TMP') ?? '', constant('_DIR_CACHE') ?? '', $table);
+
 	if ($table !== 'meta') {
 		// Vérifier le contenu restant de la table
 		$nb_variables = sql_countsel("spip_$table");
@@ -397,8 +405,6 @@ function supprimer_table_meta($table, $force = false) {
 			unset($GLOBALS[$table]);
 			sql_drop_table("spip_$table");
 			// Supprimer le fichier cache
-			include_spip('inc/flock');
-			$cache = cache_meta($table);
 			supprimer_fichier($cache);
 
 			// vider le cache des tables

@@ -30,7 +30,7 @@
 ## Globales
 
 - `'meta'` (si param par défaut de `inc_meta_dist()`) (533 appels avec `$GLOBALS['meta']` dans spip et plugins-dist)
-  - -> fonction lire_meta($name) (et $meta->get($name))
+  - -> fonction lire_meta($name) (et $meta->read($name))
 
 ## Fonctions (@internal)
 
@@ -58,14 +58,14 @@
 
 ## Cache
 
-- GLOBALS (le temps de nettoyer les $GLOBALS['meta']) c'est une copie de la mémoisation dans le MetaManager
-- RAM pour globale (CachedMetaManager) ne devrait pas rester car c'est les fonctions historiques qui synchronise la globale ci-dessus et qui vont chercher dans le cache  mémoïsé du PersistentMetaManager donc pas de TTL à gérer
-- Fichier (FileMetaManager) stocke une sérialisation de all() dans un fichier PHP: TTL commun à toutes les méta: constante _META_CACHE_TIME
+- GLOBALS (le temps de nettoyer les $GLOBALS['meta']) c'est une copie de la mémoisation dans le MetaHandler
+- RAM pour globale (CachedMetaHandler) ne devrait pas rester car c'est les fonctions historiques qui synchronise la globale ci-dessus et qui vont chercher dans le cache  mémoïsé du PersistentMetaHandler donc pas de TTL à gérer
+- Fichier (FileMetaHandler) stocke une sérialisation de all() dans un fichier PHP: TTL commun à toutes les méta: constante _META_CACHE_TIME
 
-- MetaManager final (PersistentMetaManager) cache mémoïsé de base
+- MetaHandler final (PersistentMetaHandler) cache mémoïsé de base
 
 - le clear(), le unset et le set (écriture)
-- le clear() de FileMetaManager efface le fichier. Ça doit forcer le rafraichissement du fichier et de la mémo (et donc de la globale)
+- le clear() de FileMetaHandler efface le fichier. Ça doit forcer le rafraichissement du fichier et de la mémo (et donc de la globale)
 - le all() et le get() c'est de la lecture
 
 le fichier `ecrire/base/objets.php` décrit la table SQL `spip_meta`: <https://git.spip.net/spip/spip/-/blob/master/ecrire/base/objets.php#L562>
