@@ -25,9 +25,12 @@ function _service_metas(string $table = 'meta'): MetaHandlerInterface
 {
 	/**
 	 * @todo Manque le context SPIP
+	 * @todo Traiter la constante _DEFAULT_CHARSET en amont
+	 * @todo Traiter les constantes _DIR_TMP et _DIR_CACHE en amont
+	 * @todo Traiter la constante _RENOUVELLE_ALEA en amont
 	 */
-	$tmpDir = constant('_DIR_TMP') ?? '';
-	$cacheDir = constant('_DIR_CACHE') ?? '';
+	$tmpDir = constant('_DIR_TMP') ?? 'tmp/';
+	$cacheDir = constant('_DIR_CACHE') ?? 'tmp/cache/';
 
 	$table = $table == '' ? 'meta' : $table;
 
@@ -126,8 +129,7 @@ function _inc_meta_dist($table = 'meta')
 	$new = null;
 	// Lire les meta, en cache si present, valide et lisible
 	// en cas d'install ne pas faire confiance au meta_cache eventuel
-	// $cache = $service_meta->getCacheFilename(constant('_DIR_TMP') ?? '', constant('_DIR_CACHE') ?? '', $table);
-	$cache = 'tmp/meta_cache.php';
+	$cache = $service_meta->getCacheFilename(constant('_DIR_TMP') ?? '', constant('_DIR_CACHE') ?? '', $table);
 
 	if (
 		(!($exec = _request('exec')) || !autoriser_sans_cookie($exec))
@@ -150,10 +152,14 @@ function _inc_meta_dist($table = 'meta')
 	}
 
 	// renouveller l'alea general si trop vieux ou sur demande explicite
+	/**
+	 * @todo Traiter la constante _RENOUVELLE_ALEA en amont
+	 */
+	$renouvelleAlea = constant('_RENOUVELLE_ALEA') ?? 12 * 3600;
 	if (
 		(test_espace_prive() || isset($_GET['renouvelle_alea']))
 		&& $GLOBALS[$table]
-		&& time() > _RENOUVELLE_ALEA + ($GLOBALS['meta']['alea_ephemere_date'] ?? 0)
+		&& time() > $renouvelleAlea + ($GLOBALS['meta']['alea_ephemere_date'] ?? 0)
 	) {
 		// si on n'a pas l'acces en ecriture sur le cache,
 		// ne pas renouveller l'alea sinon le cache devient faux
@@ -167,7 +173,7 @@ function _inc_meta_dist($table = 'meta')
 	}
 	// et refaire le cache si on a du lire en base
 	if (!$new) {
-		touch_meta(false, $table);
+		touch_meta(null, $table);
 	}
 }
 
@@ -190,7 +196,10 @@ function lire_metas($table = 'meta')
 			|| !$GLOBALS[$table]['charset']
 			|| $GLOBALS[$table]['charset'] == '_DEFAULT_CHARSET' // hum, correction d'un bug ayant abime quelques install
 		) {
-			ecrire_meta('charset', _DEFAULT_CHARSET, true, $table);
+			/**
+			 * @todo Traiter la constante _DEFAULT_CHARSET en amont
+			 */
+			ecrire_meta('charset', constant('_DEFAULT_CHARSET') ?? 'utf-8', true, $table);
 		}
 
 		// noter cette table de configuration dans les meta de SPIP
@@ -212,19 +221,20 @@ function lire_metas($table = 'meta')
 	return $GLOBALS[$table] ?? null;
 }
 
-
 /**
  * Mettre en cache la liste des meta, sauf les valeurs sensibles
- * pour qu'elles ne soient pas visibiles dans un fichier (souvent en 777)
+ * pour qu'elles ne soient pas visibiles dans un fichier (souvent en 777).
+ * 
+ * @api
+ * @todo Appels à remplacer dans ecrire/plugins/installer.php::plugins_installer_dist()
+ * @todo À supprimer
  * 
  * @deprecated 0.1
  *
- * @param bool|int $antidate
- *      Date de modification du fichier à appliquer si indiqué (timestamp)
- * @param string $table
- *      Table SQL d'enregistrement des meta.
- **/
-function touch_meta($antidate = false, $table = 'meta')
+ * @param int|null $antidate Date de modification du fichier à appliquer si indiqué (timestamp)
+ * @param string   $table    Table SQL d'enregistrement des métas.
+ */
+function touch_meta(?int $antidate = null, string $table = 'meta'): void
 {
 	/** @var FileMetaHandler $service_meta */
 	$service_meta = _service_metas($table);
@@ -271,6 +281,9 @@ function _effacer_meta($nom, $table = 'meta')
 	// c'est un peu moins bien qu'un vrai verrou mais ca suffira
 	// et utiliser une statique pour eviter des acces disques a repetition
 	static $touch = [];
+	/**
+	 * @todo À supprimer ici après s'être assuré que l'algo est respecté dans $metaHandler->erase($name)
+	 */
 	$antidate = time() - ($service_meta::CACHE_PERIOD << 4);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);
@@ -335,6 +348,9 @@ function _ecrire_meta($nom, $valeur, $importable = null, $table = 'meta')
 
 	$GLOBALS[$table][$nom] = $valeur;
 	// cf effacer pour comprendre le double touch
+	/**
+	 * @todo À supprimer ici après s'être assuré que l'algo est respecté dans $metaHandler->write($name, $value, $importable)
+	 */
 	$antidate = time() - ($service_meta::CACHE_PERIOD << 1);
 	if (!isset($touch[$table])) {
 		touch_meta($antidate, $table);

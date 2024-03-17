@@ -3,3 +3,4 @@
 /tests/ export-ignore
 /phpunit.xml.dist export-ignore
 /phpstan.neon.dist export-ignore
+/.php-cs-fixer.dist.php export-ignore

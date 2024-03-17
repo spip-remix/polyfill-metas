@@ -24,7 +24,6 @@ class FileMetaHandler implements MetaHandlerInterface, LoggerGetterInterface
 
     private FreshInterface $serializer;
 
-    /** @param FreshInterface $serializer */
     public function setSerializer(FreshInterface $serializer): void
     {
         $this->serializer = $serializer;
